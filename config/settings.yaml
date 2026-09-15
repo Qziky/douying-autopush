@@ -1,0 +1,152 @@
+# =========================================================
+# 抖音自动化内容生产系统 - 全局配置
+# 分层结构：通用 -> 各模块，均可被用户覆盖
+# =========================================================
+
+# ---------- 项目基础 ----------
+project:
+  root: ""                # 留空则自动定位到项目根目录（即本文件所在目录的上级）
+  timezone: "Asia/Shanghai"
+
+# ---------- 日志系统 ----------
+logging:
+  level: "INFO"           # DEBUG / INFO / WARNING / ERROR
+  dir: "data/logs"
+  backup_days: 7          # 日志保留天数（按天切割）
+
+# ---------- 调度触发 ----------
+scheduler:
+  enabled: true
+  cron: "0 8,12,18 * * *" # 每天 8/12/18 点执行全流程
+  max_daily_publish: 3    # 单日最大发布数
+  interval_hours: 2       # 两次发布最小间隔（小时）
+
+# ---------- 热点分析模块 ----------
+hot_analysis:
+  # 采集源优先级：api -> playwright -> mock（失败自动降级）
+  source_order: ["api", "playwright", "mock"]
+  api:
+    timeout: 15
+    retry: 3
+    url: "https://www.douyin.com/aweme/v1/web/hot/search/list/"
+  playwright:
+    url: "https://www.douyin.com/hot"
+    timeout: 30000        # 毫秒
+  mock:
+    enabled: true         # 兜底演示数据（标注来源，不用于真实发布）
+  refresh_interval: 1800  # 秒
+  fetch_limit: 30         # 抓取热点条数上限
+
+  # 选题规则：按账号定位配置
+  selector:
+    enable_category_filter: true
+    categories: ["社会", "科技", "教育", "财经", "娱乐"]  # 允许的领域
+    min_hot_value: 100000 # 热度阈值（低于则过滤）
+    exclude_keywords:     # 排除关键词
+      - "明星绯闻"
+      - "游戏"
+      - "八卦"
+    top_n: 1              # 输出 TOP N 个选题
+    weights:              # 评分权重（总和应为 1.0）
+      hot_value: 0.5      # 热度
+      match_score: 0.3    # 领域匹配度
+      rise_potential: 0.2 # 上升潜力
+
+# ---------- 文案生成模块 ----------
+content_gen:
+  # 大模型配置（OpenAI 兼容接口，支持多家）
+  llm:
+    provider: "openai"    # openai / deepseek / moonshot / custom
+    base_url: ""          # 留空使用官方地址；自定义供应商填 https://api.xxx.com/v1
+    api_key: ""           # 填入你的 API Key；留空则启用内置演示生成器
+    model: "gpt-4o-mini"
+    temperature: 0.8
+    max_tokens: 4096
+    timeout: 60
+    retry: 3
+  prompt_template: "src/content_gen/prompts/script_gen.tpl"
+  demo_mode: true         # 未配置 API Key 时自动启用内置模板生成器
+
+# ---------- 视频渲染模块 ----------
+video:
+  resolution: [1080, 1920]  # 宽 x 高（竖屏）
+  fps: 30
+  default_duration: 60      # 目标时长（秒）
+  codec: "libx264"
+  hardware_encoder: ""       # 硬件编码加速：h264_nvenc / h264_qsv / hevc_amf（imageio-ffmpeg 自带 ffmpeg 通常仅软编）
+  preset: "faster"           # 编码速度优先（x264 preset: ultrafast~placebo）
+  cover_second: 0.0         # 封面截取时间点（秒），留空取首帧
+  subtitle:
+    enabled: true
+    font_size_ratio: 0.055  # 相对画面宽度的字号比例
+    position: "bottom"      # bottom / center
+    margin_ratio: 0.08      # 底部留白比例
+    max_chars_per_line: 14  # 单行最大字符数（超长自动换行）
+    color: "#FFFFFF"
+    stroke_color: "#000000"
+  transition_seconds: 0.4   # 场景切换转场时长（秒）
+
+# ---------- 语音合成 ----------
+tts:
+  engine: "edge"            # edge
+  voice: "zh-CN-XiaoxiaoNeural"
+  rate: "+0%"               # 语速
+  volume: "+0%"
+  mock: false               # true 时生成静音占位音频（无网络/无依赖环境演示用）
+  gap_seconds: 0.35         # 逐句配音时，句间停顿（秒）
+  tail_seconds: 0.6         # 结尾留白（秒）
+
+# ---------- 素材服务 ----------
+material:
+  provider: "pexels"        # pexels
+  pexels:
+    api_key: ""             # 填入 Pexels API Key；留空则生成渐变占位图
+    base_url: "https://api.pexels.com/v1/search"
+    per_page: 5
+    min_width: 1080
+    min_height: 1920
+  cache_dir: "cache/material"
+  use_local_first: true     # 本地素材库优先
+  local_dir: "cache/material/local"
+  placeholder: true         # 无 API Key / 搜索失败时生成渐变占位图
+
+# ---------- 抖音适配器 ----------
+douyin:
+  publish_url: "https://creator.douyin.com/creator-micro/content/upload"
+  home_url: "https://www.douyin.com/"
+  accounts_file: "config/accounts.yaml"
+  cookie_dir: "data/cookies"
+  headless: false           # 发布需要登录，默认有头模式
+  dry_run: true             # 演练模式：不真实发布，只打印将执行的动作
+  # 谁可以看：public=公开（默认），friends=好友可见，private=仅自己可见（私密）
+  visibility: "public"
+  timeout:
+    upload: 180000          # 上传等待上限（毫秒）
+    publish: 60000          # 发布结果等待上限（毫秒）
+
+# ---------- 风控 ----------
+risk_control:
+  enabled: true
+  delay_range: [3, 10]      # 每次操作前随机延迟秒数
+  human_typing: true        # 模拟打字速度
+  typing_speed: [0.05, 0.15]
+  mouse_trajectory: true    # 贝塞尔曲线鼠标轨迹
+  publish_frequency:
+    max_per_day: 3
+    min_interval_hours: 2
+  circuit_breaker: 3        # 连续失败 N 次熔断当日任务
+
+# ---------- 合规校验 ----------
+compliance:
+  sensitive_words_file: "config/sensitive_words.txt"
+  llm_second_check: false   # 配置了 API Key 后建议开启
+  block_on_hit: true        # 命中敏感词即终止流程
+
+# ---------- 数据存储 ----------
+storage:
+  db_path: "data/works.db"
+
+# ---------- 通用 ----------
+retry:
+  default_max_retries: 3
+  default_delay: 2

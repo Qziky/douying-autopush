@@ -1,0 +1,13 @@
+# =========================================================
+# 抖音账号配置示例
+# ---------------------------------------------------------
+# 用法：复制本文件为 accounts.yaml 并按需修改。
+#   copy config\accounts.example.yaml config\accounts.yaml  # Windows
+# accounts.yaml 已被 .gitignore 忽略；Cookie 属敏感信息，请勿提交。
+# cookie_file 无需手填，运行 `uv run python main.py login` 扫码后自动生成。
+# =========================================================
+accounts:
+  - name: "main"
+    enabled: true
+    remark: "主账号（建议先用小号演练）"
+    # cookie_file: "data/cookies/main.json"   # 登录后自动生成，无需手填

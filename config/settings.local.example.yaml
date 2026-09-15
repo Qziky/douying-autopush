@@ -1,0 +1,26 @@
+# =========================================================
+# 本地私有配置示例
+# ---------------------------------------------------------
+# 用法：复制本文件为 settings.local.yaml 并填入你自己的凭证。
+#   cp config/settings.local.example.yaml config/settings.local.yaml   # macOS/Linux
+#   copy config\settings.local.example.yaml config\settings.local.yaml # Windows
+# settings.local.yaml 已被 .gitignore 忽略，永远不会提交，密钥不会泄露。
+# 本文件会与 config/settings.yaml 深度合并，覆盖同名配置项。
+# =========================================================
+
+content_gen:
+  llm:
+    # OpenAI 兼容接口，支持 deepseek / openai / moonshot 等
+    provider: "deepseek"          # openai / deepseek / moonshot / custom
+    base_url: "https://api.deepseek.com"
+    api_key: "sk-在此填入你的APIKey"  # 留空则自动降级为内置演示生成器
+    model: "deepseek-chat"        # 按所选供应商填写模型名
+    temperature: 0.8
+    max_tokens: 4096
+    timeout: 90
+    retry: 3
+
+# 如需 Pexels 真实视频/图片素材（可选），取消下面注释并填入 Key：
+# material:
+#   pexels:
+#     api_key: "在此填入PexelsKey"   # 免费申请：https://www.pexels.com/api/
